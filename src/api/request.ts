@@ -1,0 +1,92 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+import to from "await-to-js";
+import { ApiConfig } from "./type";
+class Request {
+  private baseUrl: string = "https://aliv18.data.moji.com";
+  private headers: Record<string, string>;
+  private apiMap: ApiConfig = {
+    forecast24hours: {
+      path: "/whapi/json/alicityweather/forecast24hours",
+      token: "008d2ad9197090c5dddc76f583616606",
+    },
+  };
+  private appCode: string;
+  constructor(appCode: string, headers?: Record<string, string>) {
+    this.appCode = appCode;
+    this.headers = {
+      ...headers,
+      Authorization: `APPCODE ${this.appCode}`,
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    };
+  }
+
+  // 请求拦截器（可自定义扩展）
+  private requestInterceptor(config: RequestInit): RequestInit {
+    return config;
+  }
+
+  // 响应拦截器（可自定义扩展）
+  private async responseInterceptor(response: Response) {
+    if (!response.ok) {
+      // 这里可以统一处理错误
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = (await response.json()) as {
+      data: unknown;
+    };
+    return result.data !== undefined ? result.data : result;
+  }
+
+  async get(api: string, params?: Record<string, any>) {
+    let query = params ? "?" + new URLSearchParams(params).toString() : "";
+    const url = this.apiMap[api].path;
+    const config: RequestInit = {
+      method: "GET",
+      headers: this.headers,
+    };
+    const interceptedConfig = this.requestInterceptor(config);
+    const [fetchErr, response] = await to(
+      fetch(this.baseUrl + url + query, interceptedConfig)
+    );
+    if (fetchErr) {
+      throw new Error(fetchErr.message || `请求接口${url}失败`);
+    }
+    const [err, res] = await to(this.responseInterceptor(response));
+    if (err) {
+      throw new Error(err.message || `解析接口${url}响应失败`);
+    }
+    return res;
+  }
+  async post<Q, T>(
+    api: string,
+    data?: Q,
+    headers?: Record<string, string>
+  ): Promise<T> {
+    const apiToken = this.apiMap[api].token;
+    const bodyData = { ...data, token: apiToken };
+    const config: RequestInit = {
+      method: "POST",
+      headers: {
+        ...this.headers,
+        ...headers,
+      },
+      body: new URLSearchParams(bodyData).toString(),
+    };
+    const url = this.apiMap[api].path;
+    const interceptedConfig = this.requestInterceptor(config);
+    const [fetchErr, response] = await to(
+      fetch(this.baseUrl + url, interceptedConfig)
+    );
+    if (fetchErr) {
+      throw new Error(fetchErr.message || `请求接口${url}失败`);
+    }
+    // 再用 await to 包裹 responseInterceptor
+    const [err, res] = await to(this.responseInterceptor(response));
+    if (err) {
+      throw new Error(err.message || `解析接口${url}响应失败`);
+    }
+    return res as T;
+  }
+}
+
+export default Request;
