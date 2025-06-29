@@ -1,7 +1,7 @@
 export type ApiConfig = {
   [apiName: string]: {
     path: string;
-    token: string;
+    token?: string;
   };
 };
 export type forecast24hoursParams = {
@@ -43,4 +43,27 @@ export interface Forecast24hoursHourly {
 export interface Forecast24hoursResult {
   city: Forecast24hoursCity;
   hourly: Forecast24hoursHourly[];
+}
+
+export interface CitySearchParams {
+  keyWord: string;
+}
+export interface CityInfo {
+  id: number;
+  parentId: number;
+  name: string;
+  pname: string;
+  counname: string;
+  localName: string;
+  localPname: string;
+  localCounname: string;
+  latitude: string;
+  longtitude: string;
+  city_lable: Record<string, unknown>[];
+  cityId: number;
+  cityType: number;
+}
+
+export interface CitySearchResult {
+  city_list: CityInfo[];
 }

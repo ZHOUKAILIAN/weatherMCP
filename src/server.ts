@@ -38,32 +38,56 @@ export class WeatherMcpServer {
 
   private registerTools() {
     const { weatherClient } = this;
-    this.server.tool("get-weather", "获取天气预报信息", {}, async () => {
-      try {
-        const response = await weatherClient.getWeather();
-        const hourly = response.hourly || [];
+    this.server.tool(
+      "get-weather",
+      "获取指定城市天气预报信息（默认杭州市）",
+      {
+        cityName: {
+          type: "number",
+          description: "城市名称，如“杭州市”",
+          required: false,
+          default: 143,
+        },
+      },
+      async ({ cityName }: { cityName: string } = { cityName: "hangzhou" }) => {
+        try {
+          const cityIdList = await weatherClient.getCityIdByName(cityName);
+          if (!cityIdList.length) {
+            return {
+              isError: true,
+              content: [
+                {
+                  type: "text",
+                  text: `未找到城市“${cityName}”的ID，请检查名称是否正确`,
+                },
+              ],
+            };
+          }
+          const response = await weatherClient.getWeather(cityIdList[0].cityId);
+          const hourly = response.hourly || [];
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({ hourly }),
-            },
-          ],
-        };
-      } catch (error: any) {
-        Logger.error(`获取天气预报信息失败:`, error);
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: `获取天气预报信息失败: ${error.message || "未知错误"}`,
-            },
-          ],
-        };
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ hourly }),
+              },
+            ],
+          };
+        } catch (error: any) {
+          Logger.error(`获取天气预报信息失败:`, error);
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: `获取天气预报信息失败: ${error.message || "未知错误"}`,
+              },
+            ],
+          };
+        }
       }
-    });
+    );
   }
   startHttp(port: number) {
     const app = express();

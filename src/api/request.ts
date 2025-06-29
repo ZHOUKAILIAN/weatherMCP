@@ -2,7 +2,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import to from "await-to-js";
 import { ApiConfig } from "./type";
 class Request {
-  private baseUrl: string = "https://aliv18.data.moji.com";
+  private baseUrl: string;
   private headers: Record<string, string>;
   private apiMap: ApiConfig = {
     forecast24hours: {
@@ -37,13 +37,20 @@ class Request {
       path: "/whapi/json/alicityweather/aqiforecast5days",
       token: "0418c1f4e5e66405d33556418189d2d0",
     },
+    citySearch: {
+      path: "/citymanage/json/h5/searchCity",
+    },
   };
   private appCode: string;
-  constructor(appCode: string, headers?: Record<string, string>) {
+  constructor(
+    appCode: string,
+    baseUrl: string,
+    headers?: Record<string, string>
+  ) {
     this.appCode = appCode;
+    this.baseUrl = baseUrl;
     this.headers = {
       ...headers,
-      Authorization: `APPCODE ${this.appCode}`,
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     };
   }
@@ -65,7 +72,7 @@ class Request {
     return result.data !== undefined ? result.data : result;
   }
 
-  async get(api: string, params?: Record<string, any>) {
+  async get<Q, T>(api: string, params?: Q): Promise<T> {
     let query = params ? "?" + new URLSearchParams(params).toString() : "";
     const url = this.apiMap[api].path;
     const config: RequestInit = {
@@ -83,15 +90,26 @@ class Request {
     if (err) {
       throw new Error(err.message || `解析接口${url}响应失败`);
     }
-    return res;
+    return res as T;
   }
   async post<Q, T>(
     api: string,
     data?: Q,
-    headers?: Record<string, string>
+    headers: Record<string, string> = {}
   ): Promise<T> {
     const apiToken = this.apiMap[api].token;
-    const bodyData = { ...data, token: apiToken };
+    const bodyData = Object.fromEntries(
+      Object.entries({
+        ...data,
+        ...(apiToken && { token: apiToken }),
+      }).map(([k, v]) => [k, v === undefined || v === null ? "" : String(v)])
+    );
+    if (apiToken) {
+      headers = {
+        ...headers,
+        Authorization: `APPCODE ${this.appCode}`,
+      };
+    }
     const config: RequestInit = {
       method: "POST",
       headers: {
