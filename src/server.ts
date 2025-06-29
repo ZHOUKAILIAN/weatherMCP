@@ -5,6 +5,7 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express, { Request, Response } from "express";
+import { z } from "zod";
 // 简单的日志记录器
 export const Logger = {
   log: (...args: any[]) => console.log(...args),
@@ -42,14 +43,14 @@ export class WeatherMcpServer {
       "get-weather",
       "获取指定城市天气预报信息（默认杭州市）",
       {
-        cityName: {
-          type: "number",
-          description: "城市名称，如“杭州市”",
-          required: false,
-          default: 143,
-        },
+        cityName: z
+          .string()
+          .default("杭州市")
+          .describe("城市地址，不提供则返回杭州市"),
       },
-      async ({ cityName }: { cityName: string } = { cityName: "hangzhou" }) => {
+      async (params = { cityName: "hangzhou" }) => {
+        console.log(params, "params");
+        const { cityName } = params;
         try {
           const cityIdList = await weatherClient.getCityIdByName(cityName);
           if (!cityIdList.length) {
@@ -65,7 +66,7 @@ export class WeatherMcpServer {
           }
           const response = await weatherClient.getWeather(cityIdList[0].cityId);
           const hourly = response.hourly || [];
-
+          console.log(hourly, "hourly");
           return {
             content: [
               {
