@@ -41,7 +41,7 @@ export class WeatherMcpServer {
     const { weatherClient } = this;
     this.server.tool(
       "get-weather",
-      "获取指定城市天气预报信息（默认杭州市）",
+      "获取指定城市24小时天气预报信息（默认杭州市）",
       {
         cityName: z
           .string()
