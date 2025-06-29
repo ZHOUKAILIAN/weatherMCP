@@ -9,6 +9,34 @@ class Request {
       path: "/whapi/json/alicityweather/forecast24hours",
       token: "008d2ad9197090c5dddc76f583616606",
     },
+    limit: {
+      path: "/whapi/json/alicityweather/limit",
+      token: "27200005b3475f8b0e26428f9bfb13e9",
+    },
+    aqi: {
+      path: "/whapi/json/alicityweather/aqi",
+      token: "8b36edf8e3444047812be3a59d27bab9",
+    },
+    lifeIndex: {
+      path: "/whapi/json/alicityweather/index",
+      token: "5944a84ec4a071359cc4f6928b797f91",
+    },
+    forecast15days: {
+      path: "/whapi/json/alicityweather/forecast15days",
+      token: "f9f212e1996e79e0e602b08ea297ffb0",
+    },
+    alert: {
+      path: "/whapi/json/alicityweather/alert",
+      token: "7ebe966ee2e04bbd8cdbc0b84f7f3bc7",
+    },
+    condition: {
+      path: "/whapi/json/alicityweather/condition",
+      token: "50b53ff8dd7d9fa320d3d3ca32cf8ed1",
+    },
+    aqiforecast5days: {
+      path: "/whapi/json/alicityweather/aqiforecast5days",
+      token: "0418c1f4e5e66405d33556418189d2d0",
+    },
   };
   private appCode: string;
   constructor(appCode: string, headers?: Record<string, string>) {
